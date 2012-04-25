@@ -1,6 +1,6 @@
 maintainer       "Garry Hill"
 maintainer_email "garry@magnetised.net"
-license          "Apache 2.0"
+license          "MIT"
 description      "Configures one or more Spontaneous CMS installations"
 version          "0.1.0"
 

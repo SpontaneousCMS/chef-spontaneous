@@ -1,9 +1,11 @@
-maintainer       "Magnetised Ltd"
-maintainer_email "cookbooks@magnetised.net"
+maintainer       "Garry Hill"
+maintainer_email "garry@magnetised.net"
 license          "MIT"
 description      "Installs/Configures a Simultaneous job server"
 long_description IO.read(File.join(File.dirname(__FILE__), 'README.md'))
 version          "0.0.1"
+
+
 depends          "rvm"
 depends          "runit"
 
