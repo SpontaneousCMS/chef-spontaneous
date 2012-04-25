@@ -1,0 +1,4 @@
+#!/bin/sh
+exec 2>&1
+export PATH="/root/.rbenv/shims:/root/.rbenv/bin:$PATH"
+exec simultaneous-server --socket <%= node[:simultaneous][:socket] %> --group <%= node[:simultaneous][:group] %> --debug

@@ -1,0 +1,129 @@
+{
+  "name": "simultaneous",
+  "description": "Installs/Configures a Simultaneous job server",
+  "long_description": "Description\n===========\n\nRequirements\n============\n\nAttributes\n==========\n\nUsage\n=====\n\n",
+  "maintainer": "Magnetised Ltd",
+  "maintainer_email": "cookbooks@magnetised.net",
+  "license": "MIT",
+  "platforms": {
+  },
+  "dependencies": {
+    "rvm": ">= 0.0.0",
+    "runit": ">= 0.0.0"
+  },
+  "recommendations": {
+  },
+  "suggestions": {
+  },
+  "conflicting": {
+  },
+  "providing": {
+  },
+  "replacing": {
+  },
+  "attributes": {
+    "simultaneous/version": {
+      "display_name": "Simultaneous Version",
+      "description": "Version of Simultaneous Gem to use",
+      "default": "0.2.0",
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional",
+      "recipes": [
+
+      ]
+    },
+    "simultaneous/ruby_version": {
+      "display_name": "Ruby Version",
+      "description": "Version of Ruby to run the server with (RVM compatible)",
+      "default": "1.9.3",
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional",
+      "recipes": [
+
+      ]
+    },
+    "simultaneous/gemset": {
+      "display_name": "Gemset Name",
+      "description": "Name of the Gemset to use for the server",
+      "default": "simultaneous",
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional",
+      "recipes": [
+
+      ]
+    },
+    "simultaneous/wrapper": {
+      "display_name": "Wrapper Name",
+      "description": "Prefix of the RVM wrapper",
+      "default": "global",
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional",
+      "recipes": [
+
+      ]
+    },
+    "simultaneous/service": {
+      "display_name": "Service Name",
+      "description": "Name of runit service",
+      "default": "simultaneous",
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional",
+      "recipes": [
+
+      ]
+    },
+    "simultaneous/socket": {
+      "display_name": "Socket File",
+      "description": "Path to UNIX socket file",
+      "default": "/var/run/simultaneous.sock",
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional",
+      "recipes": [
+
+      ]
+    },
+    "simultaneous/group": {
+      "display_name": "Group",
+      "description": "Group that all users must belong to",
+      "default": "spontaneous",
+      "choice": [
+
+      ],
+      "calculated": false,
+      "type": "string",
+      "required": "optional",
+      "recipes": [
+
+      ]
+    }
+  },
+  "groupings": {
+  },
+  "recipes": {
+  },
+  "version": "0.0.1"
+}
