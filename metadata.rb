@@ -8,7 +8,6 @@ recipe "spontaneous", "Installs one of more Spontaneous CMS instances. Attribute
 
 depends "nginx"
 depends "runit"
-depends "ruby-shadow"
 
 %w{ debian ubuntu }.each do |os|
   supports os
