@@ -1,0 +1,13 @@
+rackup: <%= @home %>/spontaneous/current/config/back.ru
+pid:    <%= @home %>/spontaneous/shared/pids/thin.pid
+wait: 30
+timeout: 600
+max_conns: 1024
+require: []
+adapter: rack
+user:  <%= @login %>
+group: <%= @login %>
+max_persistent_conns: 512
+environment: production
+chdir: <%= @home %>/spontaneous/current
+socket: <%= @back_socket %>

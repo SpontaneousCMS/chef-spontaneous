@@ -1,0 +1,97 @@
+
+upstream <%= @site[:login] %>_front_server {
+  # fail_timeout=0 means we always retry an upstream even if it failed
+  # to return a good HTTP response (in case the Unicorn master nukes a
+  # single worker for timing out).
+
+  # for UNIX domain socket setups:
+  server unix:<%= @front_socket %> fail_timeout=0;
+}
+
+server {
+  # enable one of the following if you're on Linux or FreeBSD
+  listen 80; # for Linux
+  # listen 80 default accept_filter=httpready; # for FreeBSD
+
+  # If you have IPv6, you'll likely want to have two separate listeners.
+  # One on IPv4 only (the default), and another on IPv6 only instead
+  # of a single dual-stack listener.  A dual-stack listener will make
+  # for ugly IPv4 addresses in $remote_addr (e.g ":ffff:10.0.0.1"
+  # instead of just "10.0.0.1") and potentially trigger bugs in
+  # some software.
+  # listen [::]:80; # deferred or accept_filter recommended
+
+  server_name <%= (@site[:server_name][:front]).join(" ") %>;
+
+  client_max_body_size 4G;
+
+  # ~2 seconds is often enough for most folks to parse HTML/CSS and
+  # retrieve needed images/icons/frames, connections are cheap in
+  # nginx so increasing this is generally safe...
+  keepalive_timeout 5;
+
+  # path for static files
+  root <%= @home %>/spontaneous/revisions/current;
+
+  location ^~ /media/ {
+    alias       <%= @home %>/spontaneous/media/;
+    expires     max;
+  }
+
+  location ^~ /rev/ {
+    alias       <%= @home %>/spontaneous/revisions/current/rev/;
+    expires     max;
+  }
+
+  # Prefer to serve static files directly from nginx to avoid unnecessary
+  # data copies from the application server.
+  #
+  # The order of this is:
+  # 1. The site's static files (things in public)
+  # 2. The site root: / => /index.html
+  # 3. Published pages with default format: /bands => /static/bands.html
+  # 4. Published pages with some other format: /bands.js => /static/bands.js
+  # 5. Static pages in the site's public dir
+  # 6. The front app fallback
+
+  try_files /public$uri /static$uri/index.html /static$uri.html /static$uri /public$uri/index.html @app;
+
+  location @app {
+    # an HTTP header important enough to have its own Wikipedia entry:
+    #   http://en.wikipedia.org/wiki/X-Forwarded-For
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+    # enable this if and only if you use HTTPS, this helps Rack
+    # set the proper protocol for doing redirects:
+    # proxy_set_header X-Forwarded-Proto https;
+
+    # pass the Host: header from the client right along so redirects
+    # can be set properly within the Rack application
+    proxy_set_header Host $http_host;
+
+    # we don't want nginx trying to do something clever with
+    # redirects, we set the Host: header above already.
+    proxy_redirect off;
+
+    # set "proxy_buffering off" *only* for Rainbows! when doing
+    # Comet/long-poll/streaming.  It's also safe to set if you're using
+    # only serving fast clients with Unicorn + nginx, but not slow
+    # clients.  You normally want nginx to buffer responses to slow
+    # clients, even with Rails 3.1 streaming because otherwise a slow
+    # client can become a bottleneck of Unicorn.
+    #
+    # The Rack application may also set "X-Accel-Buffering (yes|no)"
+    # in the response headers do disable/enable buffering on a
+    # per-response basis.
+    # proxy_buffering off;
+
+    proxy_pass http://<%= @site[:login] %>_front_server;
+  }
+
+  # Rails error pages
+  error_page 500 502 503 504 /500.html;
+  location = /500.html {
+    root <%= @home %>/spontaneous/current/public;
+  }
+
+}

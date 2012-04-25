@@ -1,0 +1,141 @@
+
+upstream <%= @site[:login] %>_back_server {
+  server unix:<%= @back_socket %>;
+}
+
+<% if @secure -%>
+# redirect insecure connections to the CMS back to the secure version
+server {
+  listen      80;
+  server_name <%= @site[:server_name][:back] %>;
+  rewrite     ^(.*)$ https://<%= @site[:server_name][:back] %>$1 permanent;
+}
+<% end %>
+
+server {
+  # enable one of the following if you're on Linux or FreeBSD
+  <% if @secure -%>
+  listen 443; # for Linux
+  <% else %>
+  listen 80; # for Linux
+  <% end %>
+
+  # If you have IPv6, you'll likely want to have two separate listeners.
+  # One on IPv4 only (the default), and another on IPv6 only instead
+  # of a single dual-stack listener.  A dual-stack listener will make
+  # for ugly IPv4 addresses in $remote_addr (e.g ":ffff:10.0.0.1"
+  # instead of just "10.0.0.1") and potentially trigger bugs in
+  # some software.
+  <% if @secure -%>
+  # listen [::]:443; # deferred or accept_filter recommended
+  <% else %>
+  # listen [::]:80; # deferred or accept_filter recommended
+  <% end -%>
+
+  server_name <%= @site[:server_name][:back] %>;
+
+  <% if @secure -%>
+  ssl                   on;
+  ssl_certificate       <%= @ssl_certificate %>;
+  ssl_certificate_key   <%= @ssl_certificate_key %>;
+  <% end -%>
+
+  client_max_body_size  4G;
+  client_header_timeout 60m;
+  client_body_timeout   60m;
+  send_timeout          60m;
+  proxy_read_timeout    60m;
+  proxy_send_timeout    60m;
+  proxy_connect_timeout 60;
+
+
+  # ~2 seconds is often enough for most folks to parse HTML/CSS and
+  # retrieve needed images/icons/frames, connections are cheap in
+  # nginx so increasing this is generally safe...
+  keepalive_timeout 5;
+
+  # path for static files
+  root <%= @home %>/spontaneous/current/public;
+
+  add_header  Cache-Control public;
+
+  # Deny access to the messaging system
+  location = /@spontaneous/event {
+    deny all;
+  }
+
+  # Disable proxy buffering for the SSE source
+  location ^~ /@spontaneous/events {
+    proxy_buffering off;
+    proxy_pass      http://<%= @site[:login] %>_back_server;
+  }
+
+  location ^~ /media/ {
+    alias       <%= @home %>/spontaneous/media/;
+    expires     max;
+  }
+
+<% %w(js static).each do |path| %>
+  location ^~ /@spontaneous/<%= path %>/ {
+    alias       <%= @home %>/spontaneous/current/public/.spontaneous/<%= path %>/;
+    # Useful for debugging nginx setup to ensure that static files are Nginx's responsibility
+    # and are not being served from the app
+    add_header  X-Spontaneous @spontaneous/<%= path %>;
+  }
+
+<% end %>
+  # Prefer to serve static files directly from nginx to avoid unnecessary
+  # data copies from the application server.
+  #
+  # try_files directive appeared in in nginx 0.7.27 and has stabilized
+  # over time.  Older versions of nginx (e.g. 0.6.x) requires
+  # "if (!-f $request_filename)" which was less efficient:
+  # http://bogomips.org/unicorn.git/tree/examples/nginx.conf?id=v3.3.1#n127
+
+  try_files $uri @app;
+
+  location @app {
+    # A keep alive here can cause problems
+    keepalive_timeout 0;
+
+    # an HTTP header important enough to have its own Wikipedia entry:
+    #   http://en.wikipedia.org/wiki/X-Forwarded-For
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+
+    <% if @secure -%>
+    # enable this if and only if you use HTTPS, this helps Rack
+    # set the proper protocol for doing redirects:
+    proxy_set_header X-Forwarded-Proto https;
+    <% end %>
+
+    # pass the Host: header from the client right along so redirects
+    # can be set properly within the Rack application
+    proxy_set_header Host $http_host;
+
+    # we don't want nginx trying to do something clever with
+    # redirects, we set the Host: header above already.
+    proxy_redirect off;
+
+    # set "proxy_buffering off" *only* for Rainbows! when doing
+    # Comet/long-poll/streaming.  It's also safe to set if you're using
+    # only serving fast clients with Unicorn + nginx, but not slow
+    # clients.  You normally want nginx to buffer responses to slow
+    # clients, even with Rails 3.1 streaming because otherwise a slow
+    # client can become a bottleneck of Unicorn.
+    #
+    # The Rack application may also set "X-Accel-Buffering (yes|no)"
+    # in the response headers do disable/enable buffering on a
+    # per-response basis.
+    # proxy_buffering off;
+
+    proxy_pass http://<%= @site[:login] %>_back_server;
+  }
+
+  # Rails error pages
+  error_page 500 502 503 504 /500.html;
+
+  location = /500.html {
+    root <%= @home %>/spontaneous/current/public;
+  }
+}
+

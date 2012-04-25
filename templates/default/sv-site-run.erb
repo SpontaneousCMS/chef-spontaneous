@@ -1,0 +1,4 @@
+#!/bin/sh
+exec 2>&1
+export PATH="<%= @options[:home] %>/.rbenv/shims:<%= @options[:home] %>/.rbenv/bin:$PATH"
+exec chpst -u<%= @options[:login] %> runsvdir <%= @options[:home] %>/service/enabled

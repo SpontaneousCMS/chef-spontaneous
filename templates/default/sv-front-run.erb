@@ -1,0 +1,7 @@
+#!/bin/sh
+exec 2>&1
+export PATH="<%= @options[:home] %>/.rbenv/shims:<%= @options[:home] %>/.rbenv/bin:$PATH"
+cd <%= @options[:home] %>/spontaneous/current
+exec \
+  chpst -e <%= @options[:home] %>/spontaneous/config/env \
+  <%= @options[:home] %>/spontaneous/current/bin/unicorn -c <%= @options[:home] %>/spontaneous/config/unicorn.conf.rb
